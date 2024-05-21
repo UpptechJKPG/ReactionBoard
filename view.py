@@ -3,25 +3,30 @@ import time, os, serial
 from PIL import Image, ImageDraw, ImageFont
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
 
-parser = argparse.ArgumentParser(description='Something Something')
-parser.add_argument('--text', type=str, default='Hello World')
-parser.add_argument('--R', type=int, default=63)
-parser.add_argument('--G', type=int, default=63)
-parser.add_argument('--B', type=int, default=255)
+parser = argparse.ArgumentParser()
 args = parser.parse_args()
 
 
-color_R = max(0, min(args.R, 255))
-color_G = max(0, min(args.G, 255))
-color_B = max(0, min(args.B, 255))
+#white = 255,255,255,0
+#neon green = 31,255,31,0
+#purple = 100,0,200,0
+#red = 255,0,0,0
+#grer = 0,255,0,0
+#blue = 0,0,255,0
+colour_text = (255,0,0,0)
+colour_numbers = (127,127,255,0)
+colour_separations = (31,255,31,0)
 
 Noto_Serif = '/usr/local/src/fonter/Noto_Serif/NotoSerif-Italic-VariableFont_wdth,wght.ttf'#Noto_Sans/static/NotoSans-Black.ttf
 Noto_Sans = '/usr/local/src/fonter/Noto_Sans/static/NotoSans-Black.ttf'
+Pixelify = '/usr/local/src/fonter/Pixelify_Sans/static/PixelifySans-Medium.ttf'
 
 if os.path.exists(Noto_Sans) == False:
     print('Could not find path to fonts')
 if os.path.exists(Noto_Serif) == False:
     print('Could not find path to fonts')
+if os.path.exists(Pixelify) == False:
+	print('Could not find path to fonts')
 
 img_width = 64 * 2 * 2
 options = RGBMatrixOptions()
@@ -70,31 +75,43 @@ def image_draw (string_to_print):
 				table_of_highscores.pop() #remove last
 				table_of_highscores.insert(i,int_highscore) # insert at i:th place
 				break
-
-
-	font = ImageFont.truetype(Noto_Sans, 17)
-
-	draw.text((2,10), string_to_print.partition('|')[0].rjust(3, "0"),font=font, fill=(0,0,255,0))
-	draw.text((31,9), '|',font=font, fill=(0,0,255,0))
-	draw.text((40,10), string_to_print.partition('|')[2].rjust(4, "0"),font=font, fill=(0,0,255,0))
-
-	font = ImageFont.truetype(Noto_Sans, 15)
-	draw.text((0,-5), '____________________',font=font, fill=(0,255,0,0))
 	
+	#Change font and print score, time and the separation of these
+	font = ImageFont.truetype(Noto_Sans, 18)
+	draw.text((2,10), string_to_print.partition('|')[0].rjust(3, "0"),font=font, fill=(colour_numbers))
+	draw.text((40,10), string_to_print.partition('|')[2].rjust(4, "0"),font=font, fill=(colour_numbers))
+	draw.text((31,9), '|',font=font, fill=(colour_separations))
+	draw.text((31,-9), '|',font=font, fill=(colour_separations))
+	
+	#print separation
+	font = ImageFont.truetype(Noto_Sans, 20)
+	draw.text((0,-10), '____________________',font=font, fill=(colour_separations))
+	
+	#print score and time
 	font = ImageFont.truetype(Noto_Sans, 10)
-	draw.text((1,0), 'SCORE|TIME',font=font, fill=(255,0,0,0))
+	draw.text((1,0), 'SCORE  TIME',font=font, fill=(colour_text))
 
+	#print highscore
+	draw.text((66,0), 'HIGHSCORE',font=font, fill=(colour_text))
+	font = ImageFont.truetype(Pixelify,10)
+	draw.text((65,16),str(table_of_highscores[0]).rjust(3,"0"),font=font, fill=(colour_numbers))
+	draw.text((87,16),str(table_of_highscores[1]).rjust(3,"0"),font=font, fill=(colour_numbers))
+	draw.text((109,16),str(table_of_highscores[2]).rjust(3,"0"),font=font, fill=(colour_numbers))	
 	
-	draw.text((65,0), 'HIGHSCORE',font=font, fill=(255,0,0,0))
-	draw.text((65,16), str(table_of_highscores[0]).rjust(3,"0") + '|' + str(table_of_highscores[1]).rjust(3,"0") + '|' + str(table_of_highscores[2]).rjust(3,"0"),font=font, fill=(0,0,255,0))
-
+	#print seperation of highscore
+	font = ImageFont.truetype(Noto_Sans, 12)
+	draw.text((82,12), '|',font=font, fill=(colour_separations))
+	draw.text((82,17), '|',font=font, fill=(colour_separations))
+	
+	draw.text((104,12), '|',font=font, fill=(colour_separations))
+	draw.text((104,17), '|',font=font, fill=(colour_separations))
 	
 	return (image)
 
 def print_text(string_to_print):
 	global xpos, offscreen_canvas
 	image = image_draw(string_to_print)
-	
+	#move image if image bigger than 256
 	if (img_width > 256):
 		xpos += 1    
 	if (xpos > img_width):
@@ -107,6 +124,7 @@ def print_text(string_to_print):
 	time.sleep(0.01)
 
 def get_text():
+	#get string from pico
 	string_to_print = ser.readline().decode('utf-8')
 	return(str(string_to_print))
 	
